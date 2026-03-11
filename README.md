@@ -112,7 +112,7 @@ This chart highlights the BMW models that generate the largest share of total ve
 
 The share of battery electric vehicles (BEV) has increased significantly over time, reflecting the global shift toward electrification in the automotive industry.
 
-## Electric Vehicle Adoption
+
 
 <img src="bev_share.jpg" width="800">
 
