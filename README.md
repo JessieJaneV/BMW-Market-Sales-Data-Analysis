@@ -80,7 +80,9 @@ Visualizations were created to clearly communicate trends and insights.
 
 This visualization shows the evolution of BMW global sales over time, highlighting general growth patterns and fluctuations influenced by the automotive market.
 
-<img src="images/sales_trend.jpg" width="800">
+## Global Sales Trend
+
+<img src="trend_sales.jpg" width="800">
 
 ---
 
@@ -88,7 +90,9 @@ This visualization shows the evolution of BMW global sales over time, highlighti
 
 The regional analysis reveals how different geographic markets contribute to BMW's global performance.
 
-<img src="images/regional_sales.jpg" width="800">
+## Regional Sales Distribution
+
+<img src="regionale_sales.jpg" width="800">
 
 ---
 
@@ -96,7 +100,9 @@ The regional analysis reveals how different geographic markets contribute to BMW
 
 This chart highlights the BMW models that generate the largest share of total vehicle sales.
 
-<img src="images/top_models.jpg" width="800">
+## Top Selling Models
+
+<img src="top_models.jpg" width="800">
 
 ---
 
@@ -104,7 +110,9 @@ This chart highlights the BMW models that generate the largest share of total ve
 
 The share of battery electric vehicles (BEV) has increased significantly over time, reflecting the global shift toward electrification in the automotive industry.
 
-<img src="images/bev_share.jpg" width="800">
+## Electric Vehicle Adoption
+
+<img src="bev_share.jpg" width="800">
 
 ---
 
@@ -112,8 +120,9 @@ The share of battery electric vehicles (BEV) has increased significantly over ti
 
 The correlation matrix helps identify relationships between key variables such as sales, revenue, fuel prices, and macroeconomic indicators.
 
-<img src="images/correlation_matrix.jpg" width="800">
+## Correlation Matrix
 
+<img src="correlation_matrix.jpg" width="800">
 ---
 
 # Notebook
@@ -122,7 +131,7 @@ The full analysis, including data cleaning, exploration, and visualization, is a
 
 **Google Colab Notebook**
 
-(Add your Colab link here)
+(https://colab.research.google.com/drive/1LMINJsDHcCutr7Uo2o2GPU0aWciwd9P5?usp=sharing)
 
 ---
 
