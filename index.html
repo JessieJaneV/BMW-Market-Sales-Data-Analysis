@@ -263,52 +263,43 @@ return arrow+" "+g.toFixed(1)+"%"
 
 function updateKPI(data){
 
-let year=yearSlider.value
+let unitsEl = document.getElementById("units")
+let revenueEl = document.getElementById("revenue")
+let priceEl = document.getElementById("price")
+let bevEl = document.getElementById("bev")
 
-let current=data.filter(d=>d.Year==year)
+let year = yearSlider.value
 
-let prev=data.filter(d=>d.Year==year-1)
+let current = data.filter(d => d.Year == year)
+let prev = data.filter(d => d.Year == year - 1)
 
 function sum(arr,col){
-
 return arr.reduce((a,b)=>a+(+b[col]||0),0)
-
 }
 
-let units=sum(current,"Units_Sold")
+let units = sum(current,"Units_Sold")
+let unitsPrev = sum(prev,"Units_Sold")
 
-let unitsPrev=sum(prev,"Units_Sold")
+let revenue = sum(current,"Revenue_EUR")
+let revenuePrev = sum(prev,"Revenue_EUR")
 
-let revenue=sum(current,"Revenue_EUR")
+let price = sum(current,"Avg_Price_EUR")/current.length
+let pricePrev = sum(prev,"Avg_Price_EUR")/prev.length
 
-let revenuePrev=sum(prev,"Revenue_EUR")
+let bev = sum(current,"BEV_Share")/current.length
+let bevPrev = sum(prev,"BEV_Share")/prev.length
 
-let price=sum(current,"Avg_Price_EUR")/current.length
+unitsEl.innerText = units.toLocaleString()
+revenueEl.innerText = Math.round(revenue/1e9)+"B"
+priceEl.innerText = Math.round(price)
+bevEl.innerText = bev.toFixed(1)+"%"
 
-let pricePrev=sum(prev,"Avg_Price_EUR")/prev.length
-
-let bev=sum(current,"BEV_Share")/current.length
-
-let bevPrev=sum(prev,"BEV_Share")/prev.length
-
-unitsEl.innerText=units.toLocaleString()
-
-revenueEl.innerText=Math.round(revenue/1e9)+"B"
-
-priceEl.innerText=Math.round(price)
-
-bevEl.innerText=bev.toFixed(1)+"%"
-
-unitsGrowth.innerText=computeGrowth(units,unitsPrev)
-
-revenueGrowth.innerText=computeGrowth(revenue,revenuePrev)
-
-priceGrowth.innerText=computeGrowth(price,pricePrev)
-
-bevGrowth.innerText=computeGrowth(bev,bevPrev)
+unitsGrowth.innerText = computeGrowth(units,unitsPrev)
+revenueGrowth.innerText = computeGrowth(revenue,revenuePrev)
+priceGrowth.innerText = computeGrowth(price,pricePrev)
+bevGrowth.innerText = computeGrowth(bev,bevPrev)
 
 }
-
 function salesTrend(data){
 
 let map={}
