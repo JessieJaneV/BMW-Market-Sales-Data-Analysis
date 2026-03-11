@@ -342,78 +342,67 @@ line:{width:4,color:"#38bdf8"}
 
 function bevChart(data){
 
-let years=[...new Set(data.map(d=>d.Year))]
+let yearly = {}
 
-let bevPerYear=years.map(y=>{
+data.forEach(d => {
 
-let arr=data.filter(d=>d.Year==y)
+let y = d.Year
 
-let avg=arr.reduce((a,b)=>a+(+b.BEV_Share),0)/arr.length
+if(!yearly[y]){
+yearly[y] = {bev:0, count:0}
+}
 
-return avg
+yearly[y].bev += (+d.BEV_Share || 0)
+yearly[y].count += 1
 
 })
 
-let frames=years.map((y,i)=>({
+let years = Object.keys(yearly).sort()
 
-name:y,
-
-data:[{
-
-x:years.slice(0,i+1),
-
-y:bevPerYear.slice(0,i+1),
-
-mode:"lines+markers"
-
-}]
-
-}))
+let bevValues = years.map(y => yearly[y].bev / yearly[y].count)
 
 Plotly.newPlot("bevChart",[{
 
-x:[years[0]],
+x: years,
+y: bevValues,
 
-y:[bevPerYear[0]],
+mode: "lines+markers",
 
-mode:"lines+markers",
+line:{
+width:4,
+color:"#22c55e"
+},
 
-line:{width:4,color:"#22c55e"}
+marker:{
+size:8
+},
 
-}],
+hovertemplate:
+"Year: %{x}<br>" +
+"BEV Share: %{y:.2f}%"
 
-{
+}],{
 
-title:"EV Adoption Growth",
+title:"EV Adoption Trend",
 
 paper_bgcolor:"#1e293b",
 plot_bgcolor:"#1e293b",
+
 font:{color:"white"},
 
-updatemenus:[{
-
-type:"buttons",
-
-buttons:[{
-
-label:"Play",
-
-method:"animate",
-
-args:[null]
-
-}]
-
-}]
-
+xaxis:{
+title:"Year",
+gridcolor:"#334155"
 },
 
-{frames:frames}
-
-)
-
+yaxis:{
+title:"BEV Share (%)",
+gridcolor:"#334155"
 }
 
+})
+
+}
 function regional(data){
 
 let map={}
