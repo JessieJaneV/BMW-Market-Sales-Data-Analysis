@@ -82,7 +82,7 @@ Visualizations were created to clearly communicate trends and insights.
 
 This visualization shows the evolution of BMW global sales over time, highlighting general growth patterns and fluctuations influenced by the automotive market.
 
-## Global Sales Trend
+
 
 <img src="trend_sales.jpg" width="800">
 
