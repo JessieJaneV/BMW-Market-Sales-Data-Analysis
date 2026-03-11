@@ -466,34 +466,77 @@ marker:{color:"#6366f1"}
 
 function worldMap(data){
 
-let map={}
+let regionSales = {}
 
-data.forEach(d=>{
+data.forEach(d => {
 
-map[d.Region]=(map[d.Region]||0)+(+d.Units_Sold)
+let r = d.Region
+
+regionSales[r] = (regionSales[r] || 0) + (+d.Units_Sold || 0)
+
+})
+
+let coords = {
+
+"Europe": [50,10],
+"Asia": [35,100],
+"North America": [40,-100],
+"South America": [-15,-60],
+"Africa": [0,20],
+"Oceania": [-25,140]
+
+}
+
+let lats=[]
+let lons=[]
+let values=[]
+let labels=[]
+
+Object.keys(regionSales).forEach(r => {
+
+if(!coords[r]) return
+
+lats.push(coords[r][0])
+lons.push(coords[r][1])
+values.push(regionSales[r])
+labels.push(r)
 
 })
 
 Plotly.newPlot("map",[{
 
-type:"choropleth",
+type:"scattergeo",
 
-locations:Object.keys(map),
+lat:lats,
+lon:lons,
 
-locationmode:"continent names",
+text:labels,
 
-z:Object.values(map),
-
+marker:{
+size:values.map(v=>v/20000),
+color:values,
 colorscale:"Blues",
+showscale:true
+},
 
-colorbar:{title:"Units Sold"}
+hovertemplate:
+"<b>%{text}</b><br>" +
+"Units Sold: %{marker.size}"
 
-}],
+}],{
 
-{
-title:"BMW Global Sales by Region",
+title:"Global Sales by Region",
+
+geo:{
+projection:{type:"natural earth"},
+showland:true,
+landcolor:"#1e293b",
+bgcolor:"#0f172a"
+},
+
 paper_bgcolor:"#1e293b",
 font:{color:"white"}
+
 })
 
 }
