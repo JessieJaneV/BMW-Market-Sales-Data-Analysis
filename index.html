@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BMW Global Sales Dashboard</title>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+
+<style>
+
+body{
+    margin:0;
+    font-family: "Segoe UI", sans-serif;
+    background: #0f172a;
+    color:white;
+}
+
+.header{
+    text-align:center;
+    padding:30px;
+    font-size:28px;
+    font-weight:600;
+}
+
+.container{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    padding:20px;
+}
+
+.card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.4);
+}
+
+.card h2{
+    font-size:18px;
+    margin-bottom:10px;
+}
+
+.full{
+grid-column: span 2;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+BMW Global Sales Dashboard
+</div>
+
+<div class="container">
+
+<div class="card full">
+<h2>Global Sales Trend</h2>
+<div id="salesTrend"></div>
+</div>
+
+<div class="card">
+<h2>Regional Sales</h2>
+<div id="regionalSales"></div>
+</div>
+
+<div class="card">
+<h2>Top Models</h2>
+<div id="topModels"></div>
+</div>
+
+<div class="card">
+<h2>BEV Adoption</h2>
+<div id="bevTrend"></div>
+</div>
+
+<div class="card">
+<h2>Correlation Matrix</h2>
+<div id="correlation"></div>
+</div>
+
+</div>
+
+<script>
+
+Papa.parse("bmw_global_sales_2018_2025.csv", {
+download:true,
+header:true,
+complete:function(results){
+
+let data = results.data
+
+// ---- SALES TREND ----
+
+let salesByYear = {}
+
+data.forEach(d=>{
+let year=d.Year
+let units=Number(d.Units_Sold)
+
+if(!salesByYear[year]) salesByYear[year]=0
+salesByYear[year]+=units
+})
+
+let years=Object.keys(salesByYear)
+let sales=Object.values(salesByYear)
+
+Plotly.newPlot("salesTrend",[{
+x:years,
+y:sales,
+type:"scatter",
+mode:"lines+markers",
+line:{width:4}
+}])
+
+
+ // ---- REGIONAL SALES ----
+
+let regionSales={}
+
+data.forEach(d=>{
+let r=d.Region
+let u=Number(d.Units_Sold)
+
+if(!regionSales[r]) regionSales[r]=0
+regionSales[r]+=u
+})
+
+Plotly.newPlot("regionalSales",[{
+x:Object.keys(regionSales),
+y:Object.values(regionSales),
+type:"bar"
+}])
+
+
+ // ---- TOP MODELS ----
+
+let modelSales={}
+
+data.forEach(d=>{
+let m=d.Model
+let u=Number(d.Units_Sold)
+
+if(!modelSales[m]) modelSales[m]=0
+modelSales[m]+=u
+})
+
+let sorted=Object.entries(modelSales)
+.sort((a,b)=>b[1]-a[1])
+.slice(0,10)
+
+Plotly.newPlot("topModels",[{
+x:sorted.map(d=>d[0]),
+y:sorted.map(d=>d[1]),
+type:"bar"
+}])
+
+
+ // ---- BEV TREND ----
+
+let bevYear={}
+
+data.forEach(d=>{
+let y=d.Year
+let bev=Number(d.BEV_Share)
+
+if(!bevYear[y]) bevYear[y]=[]
+bevYear[y].push(bev)
+})
+
+let bevAvg=Object.keys(bevYear).map(y=>{
+return bevYear[y].reduce((a,b)=>a+b)/bevYear[y].length
+})
+
+Plotly.newPlot("bevTrend",[{
+x:Object.keys(bevYear),
+y:bevAvg,
+type:"scatter",
+mode:"lines+markers"
+}])
+
+
+ // ---- CORRELATION ----
+
+function corr(x,y){
+
+let avgX=x.reduce((a,b)=>a+b)/x.length
+let avgY=y.reduce((a,b)=>a+b)/y.length
+
+let num=0
+let denX=0
+let denY=0
+
+for(let i=0;i<x.length;i++){
+num+=(x[i]-avgX)*(y[i]-avgY)
+denX+=(x[i]-avgX)**2
+denY+=(y[i]-avgY)**2
+}
+
+return num/Math.sqrt(denX*denY)
+}
+
+let vars=["Units_Sold","Avg_Price_EUR","Revenue_EUR","BEV_Share","GDP_Growth","Fuel_Price_Index"]
+
+let matrix=[]
+
+vars.forEach(v1=>{
+let row=[]
+vars.forEach(v2=>{
+let x=data.map(d=>Number(d[v1]))
+let y=data.map(d=>Number(d[v2]))
+row.push(corr(x,y))
+})
+matrix.push(row)
+})
+
+Plotly.newPlot("correlation",[{
+z:matrix,
+x:vars,
+y:vars,
+type:"heatmap"
+}])
+
+}
+
+})
+
+</script>
+
+</body>
+</html>
