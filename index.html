@@ -1,44 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 
 <head>
 
 <meta charset="UTF-8">
-<title>BMW Global Sales Dashboard</title>
+<title>BMW Sales Dashboard</title>
 
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <style>
 
 body{
-font-family:Segoe UI;
+font-family:Arial;
 background:#0f172a;
 color:white;
 margin:0;
 }
 
 .header{
-padding:30px;
 font-size:28px;
 text-align:center;
-font-weight:600;
+padding:25px;
 }
 
 .filters{
 display:flex;
 gap:20px;
-padding:20px;
 justify-content:center;
+padding:15px;
 }
 
 select{
-padding:8px;
+padding:6px;
 border-radius:6px;
-border:none;
 }
 
-.kpi-container{
+.kpis{
 display:grid;
 grid-template-columns:repeat(4,1fr);
 gap:20px;
@@ -50,13 +48,12 @@ background:#1e293b;
 padding:20px;
 border-radius:10px;
 text-align:center;
-box-shadow:0 5px 20px rgba(0,0,0,0.4);
 }
 
 .kpi-value{
-font-size:28px;
-font-weight:700;
+font-size:26px;
 margin-top:10px;
+font-weight:bold;
 }
 
 .container{
@@ -68,7 +65,7 @@ padding:20px;
 
 .card{
 background:#1e293b;
-padding:20px;
+padding:15px;
 border-radius:10px;
 }
 
@@ -82,38 +79,36 @@ grid-column:span 2;
 
 <body>
 
-<div class="header">
-BMW Global Sales Dashboard
-</div>
+<div class="header">BMW Global Sales Dashboard</div>
 
 <div class="filters">
 
-<select id="yearFilter"></select>
-<select id="regionFilter"></select>
-<select id="modelFilter"></select>
+<select id="year"></select>
+<select id="region"></select>
+<select id="model"></select>
 
 </div>
 
-<div class="kpi-container">
+<div class="kpis">
 
 <div class="kpi">
-Total Units Sold
-<div id="kpiUnits" class="kpi-value"></div>
+Units Sold
+<div id="units" class="kpi-value"></div>
 </div>
 
 <div class="kpi">
-Total Revenue (€)
-<div id="kpiRevenue" class="kpi-value"></div>
+Revenue
+<div id="revenue" class="kpi-value"></div>
 </div>
 
 <div class="kpi">
-Average Price (€)
-<div id="kpiPrice" class="kpi-value"></div>
+Avg Price
+<div id="price" class="kpi-value"></div>
 </div>
 
 <div class="kpi">
-Average BEV Share
-<div id="kpiBev" class="kpi-value"></div>
+BEV Share
+<div id="bev" class="kpi-value"></div>
 </div>
 
 </div>
@@ -125,30 +120,30 @@ Average BEV Share
 </div>
 
 <div class="card">
-<div id="regionalSales"></div>
+<div id="regional"></div>
 </div>
 
 <div class="card">
-<div id="topModels"></div>
+<div id="models"></div>
 </div>
 
 </div>
 
 <script>
 
-let rawData=[]
+let dataset=[]
 
 Papa.parse("../bmw_global_sales_2018_2025.csv",{
 
 download:true,
 header:true,
 
-complete:function(results){
+complete:function(res){
 
-rawData=results.data
+dataset=res.data.filter(d=>d.Year)
 
 initFilters()
-updateDashboard()
+update()
 
 }
 
@@ -156,141 +151,140 @@ updateDashboard()
 
 function initFilters(){
 
-let years=[...new Set(rawData.map(d=>d.Year))]
-let regions=[...new Set(rawData.map(d=>d.Region))]
-let models=[...new Set(rawData.map(d=>d.Model))]
+let years=[...new Set(dataset.map(d=>d.Year))]
+let regions=[...new Set(dataset.map(d=>d.Region))]
+let models=[...new Set(dataset.map(d=>d.Model))]
 
-fillSelect("yearFilter",years)
-fillSelect("regionFilter",regions)
-fillSelect("modelFilter",models)
+populate("year",years)
+populate("region",regions)
+populate("model",models)
 
 document.querySelectorAll("select")
-.forEach(s=>s.addEventListener("change",updateDashboard))
+.forEach(el=>el.addEventListener("change",update))
 
 }
 
-function fillSelect(id,values){
+function populate(id,values){
 
-let select=document.getElementById(id)
+let el=document.getElementById(id)
 
-select.innerHTML="<option value='all'>All</option>"
+el.innerHTML="<option value='all'>All</option>"
 
 values.forEach(v=>{
-let option=document.createElement("option")
-option.value=v
-option.text=v
-select.appendChild(option)
-})
 
-}
+let opt=document.createElement("option")
+opt.value=v
+opt.text=v
 
-function filterData(){
-
-let year=document.getElementById("yearFilter").value
-let region=document.getElementById("regionFilter").value
-let model=document.getElementById("modelFilter").value
-
-return rawData.filter(d=>{
-
-return (year==="all" || d.Year===year) &&
-(region==="all" || d.Region===region) &&
-(model==="all" || d.Model===model)
+el.appendChild(opt)
 
 })
 
 }
 
-function updateDashboard(){
+function getFiltered(){
 
-let data=filterData()
+let y=document.getElementById("year").value
+let r=document.getElementById("region").value
+let m=document.getElementById("model").value
+
+return dataset.filter(d=>
+
+(y==="all"||d.Year===y)&&
+(r==="all"||d.Region===r)&&
+(m==="all"||d.Model===m)
+
+)
+
+}
+
+function update(){
+
+let data=getFiltered()
 
 updateKPI(data)
 salesTrend(data)
-regionalSales(data)
-topModels(data)
+regional(data)
+models(data)
 
 }
 
 function updateKPI(data){
 
-let units=data.reduce((a,b)=>a+Number(b.Units_Sold),0)
+let units=data.reduce((a,b)=>a+(+b.Units_Sold||0),0)
 
-let revenue=data.reduce((a,b)=>a+Number(b.Revenue_EUR),0)
+let revenue=data.reduce((a,b)=>a+(+b.Revenue_EUR||0),0)
 
-let avgPrice=data.reduce((a,b)=>a+Number(b.Avg_Price_EUR),0)/data.length
+let avgPrice=data.reduce((a,b)=>a+(+b.Avg_Price_EUR||0),0)/data.length
 
-let bev=data.reduce((a,b)=>a+Number(b.BEV_Share),0)/data.length
+let bev=data.reduce((a,b)=>a+(+b.BEV_Share||0),0)/data.length
 
-document.getElementById("kpiUnits").innerText=units.toLocaleString()
+document.getElementById("units").innerText=units.toLocaleString()
 
-document.getElementById("kpiRevenue").innerText=Math.round(revenue/1000000)+" M"
+document.getElementById("revenue").innerText=Math.round(revenue/1000000)+" M"
 
-document.getElementById("kpiPrice").innerText=Math.round(avgPrice).toLocaleString()
+document.getElementById("price").innerText=Math.round(avgPrice)
 
-document.getElementById("kpiBev").innerText=bev.toFixed(2)+" %"
+document.getElementById("bev").innerText=bev.toFixed(2)+" %"
 
 }
 
 function salesTrend(data){
 
-let yearly={}
+let map={}
 
 data.forEach(d=>{
 
-if(!yearly[d.Year]) yearly[d.Year]=0
-yearly[d.Year]+=Number(d.Units_Sold)
+map[d.Year]=(map[d.Year]||0)+(+d.Units_Sold||0)
 
 })
 
 Plotly.newPlot("salesTrend",[{
 
-x:Object.keys(yearly),
-y:Object.values(yearly),
+x:Object.keys(map),
+y:Object.values(map),
 type:"scatter",
-mode:"lines+markers",
-line:{width:4}
+mode:"lines+markers"
 
-}],{title:"Global Sales Trend"})
+}],{title:"Sales Trend"})
 
 }
 
-function regionalSales(data){
+function regional(data){
 
-let regions={}
+let map={}
 
 data.forEach(d=>{
 
-if(!regions[d.Region]) regions[d.Region]=0
-regions[d.Region]+=Number(d.Units_Sold)
+map[d.Region]=(map[d.Region]||0)+(+d.Units_Sold||0)
 
 })
 
-Plotly.newPlot("regionalSales",[{
+Plotly.newPlot("regional",[{
 
-x:Object.keys(regions),
-y:Object.values(regions),
+x:Object.keys(map),
+y:Object.values(map),
 type:"bar"
 
 }],{title:"Regional Sales"})
 
 }
 
-function topModels(data){
+function models(data){
 
-let models={}
+let map={}
 
 data.forEach(d=>{
 
-if(!models[d.Model]) models[d.Model]=0
-models[d.Model]+=Number(d.Units_Sold)
+map[d.Model]=(map[d.Model]||0)+(+d.Units_Sold||0)
 
 })
 
-let sorted=Object.entries(models)
+let sorted=Object.entries(map)
 .sort((a,b)=>b[1]-a[1])
 .slice(0,10)
 
-Plotly.newPlot("topModels",[{
+Plotly.newPlot("models",[{
 
 x:sorted.map(d=>d[0]),
 y:sorted.map(d=>d[1]),
