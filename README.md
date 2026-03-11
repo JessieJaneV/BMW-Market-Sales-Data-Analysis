@@ -92,7 +92,7 @@ The regional analysis reveals how different geographic markets contribute to BMW
 
 ## Regional Sales Distribution
 
-<img src="regionale_sales.jpg" width="800">
+<img src="regional_sales.jpg" width="800">
 
 ---
 
