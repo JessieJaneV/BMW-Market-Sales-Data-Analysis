@@ -4,7 +4,8 @@
 <head>
 
 <meta charset="UTF-8">
-<title>BMW Sales Dashboard</title>
+
+<title>BMW Global Sales Dashboard</title>
 
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -12,28 +13,35 @@
 <style>
 
 body{
-font-family:Arial;
+margin:0;
+font-family:Inter,Segoe UI;
 background:#0f172a;
 color:white;
-margin:0;
 }
 
 .header{
-font-size:28px;
 text-align:center;
+font-size:28px;
 padding:25px;
+font-weight:600;
 }
 
-.filters{
+.controls{
 display:flex;
-gap:20px;
 justify-content:center;
+gap:25px;
 padding:15px;
 }
 
 select{
 padding:6px;
 border-radius:6px;
+border:none;
+}
+
+.slider{
+text-align:center;
+padding:15px;
 }
 
 .kpis{
@@ -44,16 +52,22 @@ padding:20px;
 }
 
 .kpi{
-background:#1e293b;
+background:linear-gradient(145deg,#1e293b,#0f172a);
+border-radius:12px;
 padding:20px;
-border-radius:10px;
 text-align:center;
+box-shadow:0 10px 30px rgba(0,0,0,0.6);
 }
 
 .kpi-value{
-font-size:26px;
+font-size:28px;
 margin-top:10px;
-font-weight:bold;
+font-weight:700;
+}
+
+.kpi-growth{
+font-size:14px;
+margin-top:5px;
 }
 
 .container{
@@ -65,8 +79,8 @@ padding:20px;
 
 .card{
 background:#1e293b;
-padding:15px;
 border-radius:10px;
+padding:15px;
 }
 
 .full{
@@ -79,13 +93,27 @@ grid-column:span 2;
 
 <body>
 
-<div class="header">BMW Global Sales Dashboard</div>
+<div class="header">BMW Global Sales Analytics</div>
 
-<div class="filters">
+<div class="controls">
 
-<select id="year"></select>
-<select id="region"></select>
-<select id="model"></select>
+<select id="regionFilter"></select>
+<select id="modelFilter"></select>
+
+</div>
+
+<div class="slider">
+
+Year
+
+<input type="range"
+id="yearSlider"
+min="2018"
+max="2025"
+step="1"
+value="2025">
+
+<span id="yearLabel">2025</span>
 
 </div>
 
@@ -94,21 +122,25 @@ grid-column:span 2;
 <div class="kpi">
 Units Sold
 <div id="units" class="kpi-value"></div>
+<div id="unitsGrowth" class="kpi-growth"></div>
 </div>
 
 <div class="kpi">
 Revenue
 <div id="revenue" class="kpi-value"></div>
+<div id="revenueGrowth" class="kpi-growth"></div>
 </div>
 
 <div class="kpi">
 Avg Price
 <div id="price" class="kpi-value"></div>
+<div id="priceGrowth" class="kpi-growth"></div>
 </div>
 
 <div class="kpi">
 BEV Share
 <div id="bev" class="kpi-value"></div>
+<div id="bevGrowth" class="kpi-growth"></div>
 </div>
 
 </div>
@@ -116,7 +148,15 @@ BEV Share
 <div class="container">
 
 <div class="card full">
+<div id="map"></div>
+</div>
+
+<div class="card">
 <div id="salesTrend"></div>
+</div>
+
+<div class="card">
+<div id="bevChart"></div>
 </div>
 
 <div class="card">
@@ -138,12 +178,13 @@ Papa.parse("bmw_global_sales_2018_2025.csv",{
 download:true,
 header:true,
 
-complete:function(results){
+complete:function(res){
 
-dataset=results.data.filter(d=>d.Year)
+dataset=res.data.filter(d=>d.Year)
 
 initFilters()
-update()
+
+updateDashboard()
 
 }
 
@@ -151,16 +192,22 @@ update()
 
 function initFilters(){
 
-let years=[...new Set(dataset.map(d=>d.Year))]
 let regions=[...new Set(dataset.map(d=>d.Region))]
 let models=[...new Set(dataset.map(d=>d.Model))]
 
-populate("year",years)
-populate("region",regions)
-populate("model",models)
+populate("regionFilter",regions)
+populate("modelFilter",models)
 
 document.querySelectorAll("select")
-.forEach(el=>el.addEventListener("change",update))
+.forEach(el=>el.addEventListener("change",updateDashboard))
+
+yearSlider.oninput=function(){
+
+yearLabel.innerText=this.value
+
+updateDashboard()
+
+}
 
 }
 
@@ -173,7 +220,9 @@ el.innerHTML="<option value='all'>All</option>"
 values.forEach(v=>{
 
 let opt=document.createElement("option")
+
 opt.value=v
+
 opt.text=v
 
 el.appendChild(opt)
@@ -182,50 +231,81 @@ el.appendChild(opt)
 
 }
 
-function getFiltered(){
+function filterData(){
 
-let y=document.getElementById("year").value
-let r=document.getElementById("region").value
-let m=document.getElementById("model").value
+let year=document.getElementById("yearSlider").value
+
+let region=document.getElementById("regionFilter").value
+
+let model=document.getElementById("modelFilter").value
 
 return dataset.filter(d=>
 
-(y==="all"||d.Year===y)&&
-(r==="all"||d.Region===r)&&
-(m==="all"||d.Model===m)
+d.Year<=year &&
+(region==="all"||d.Region===region) &&
+(model==="all"||d.Model===model)
 
 )
 
 }
 
-function update(){
+function computeGrowth(current,previous){
 
-let data=getFiltered()
+if(previous===0) return ""
 
-updateKPI(data)
-salesTrend(data)
-regional(data)
-models(data)
+let g=((current-previous)/previous)*100
+
+let arrow=g>=0?"▲":"▼"
+
+return arrow+" "+g.toFixed(1)+"%"
 
 }
 
 function updateKPI(data){
 
-let units=data.reduce((a,b)=>a+(+b.Units_Sold||0),0)
+let year=yearSlider.value
 
-let revenue=data.reduce((a,b)=>a+(+b.Revenue_EUR||0),0)
+let current=data.filter(d=>d.Year==year)
 
-let avgPrice=data.reduce((a,b)=>a+(+b.Avg_Price_EUR||0),0)/data.length
+let prev=data.filter(d=>d.Year==year-1)
 
-let bev=data.reduce((a,b)=>a+(+b.BEV_Share||0),0)/data.length
+function sum(arr,col){
 
-document.getElementById("units").innerText=units.toLocaleString()
+return arr.reduce((a,b)=>a+(+b[col]||0),0)
 
-document.getElementById("revenue").innerText=Math.round(revenue/1000000)+" M"
+}
 
-document.getElementById("price").innerText=Math.round(avgPrice)
+let units=sum(current,"Units_Sold")
 
-document.getElementById("bev").innerText=bev.toFixed(2)+" %"
+let unitsPrev=sum(prev,"Units_Sold")
+
+let revenue=sum(current,"Revenue_EUR")
+
+let revenuePrev=sum(prev,"Revenue_EUR")
+
+let price=sum(current,"Avg_Price_EUR")/current.length
+
+let pricePrev=sum(prev,"Avg_Price_EUR")/prev.length
+
+let bev=sum(current,"BEV_Share")/current.length
+
+let bevPrev=sum(prev,"BEV_Share")/prev.length
+
+unitsEl.innerText=units.toLocaleString()
+
+revenueEl.innerText=Math.round(revenue/1e9)+"B"
+
+priceEl.innerText=Math.round(price)
+
+bevEl.innerText=bev.toFixed(1)+"%"
+
+unitsGrowth.innerText=computeGrowth(units,unitsPrev)
+
+revenueGrowth.innerText=computeGrowth(revenue,revenuePrev)
+
+priceGrowth.innerText=computeGrowth(price,pricePrev)
+
+bevGrowth.innerText=computeGrowth(bev,bevPrev)
 
 }
 
@@ -235,18 +315,61 @@ let map={}
 
 data.forEach(d=>{
 
-map[d.Year]=(map[d.Year]||0)+(+d.Units_Sold||0)
+map[d.Year]=(map[d.Year]||0)+(+d.Units_Sold)
 
 })
 
 Plotly.newPlot("salesTrend",[{
 
 x:Object.keys(map),
-y:Object.values(map),
-type:"scatter",
-mode:"lines+markers"
 
-}],{title:"Sales Trend"})
+y:Object.values(map),
+
+mode:"lines+markers",
+
+line:{width:4}
+
+}],
+
+{title:"Sales Trend",paper_bgcolor:"#1e293b",plot_bgcolor:"#1e293b",font:{color:"white"}})
+
+}
+
+function bevChart(data){
+
+let map={}
+
+data.forEach(d=>{
+
+if(!map[d.Year]) map[d.Year]=[]
+
+map[d.Year].push(+d.BEV_Share)
+
+})
+
+let years=Object.keys(map)
+
+let values=years.map(y=>{
+
+let arr=map[y]
+
+return arr.reduce((a,b)=>a+b)/arr.length
+
+})
+
+Plotly.newPlot("bevChart",[{
+
+x:years,
+
+y:values,
+
+mode:"lines+markers",
+
+line:{width:4}
+
+}],
+
+{title:"BEV Adoption",paper_bgcolor:"#1e293b",plot_bgcolor:"#1e293b",font:{color:"white"}})
 
 }
 
@@ -256,17 +379,21 @@ let map={}
 
 data.forEach(d=>{
 
-map[d.Region]=(map[d.Region]||0)+(+d.Units_Sold||0)
+map[d.Region]=(map[d.Region]||0)+(+d.Units_Sold)
 
 })
 
 Plotly.newPlot("regional",[{
 
 x:Object.keys(map),
+
 y:Object.values(map),
+
 type:"bar"
 
-}],{title:"Regional Sales"})
+}],
+
+{title:"Regional Sales",paper_bgcolor:"#1e293b",plot_bgcolor:"#1e293b",font:{color:"white"}})
 
 }
 
@@ -276,21 +403,73 @@ let map={}
 
 data.forEach(d=>{
 
-map[d.Model]=(map[d.Model]||0)+(+d.Units_Sold||0)
+map[d.Model]=(map[d.Model]||0)+(+d.Units_Sold)
 
 })
 
 let sorted=Object.entries(map)
+
 .sort((a,b)=>b[1]-a[1])
+
 .slice(0,10)
 
 Plotly.newPlot("models",[{
 
 x:sorted.map(d=>d[0]),
+
 y:sorted.map(d=>d[1]),
+
 type:"bar"
 
-}],{title:"Top Models"})
+}],
+
+{title:"Top Models",paper_bgcolor:"#1e293b",plot_bgcolor:"#1e293b",font:{color:"white"}})
+
+}
+
+function worldMap(data){
+
+let map={}
+
+data.forEach(d=>{
+
+map[d.Region]=(map[d.Region]||0)+(+d.Units_Sold)
+
+})
+
+Plotly.newPlot("map",[{
+
+type:"choropleth",
+
+locations:Object.keys(map),
+
+locationmode:"country names",
+
+z:Object.values(map),
+
+colorscale:"Blues"
+
+}],
+
+{title:"Global Sales Map",paper_bgcolor:"#1e293b",font:{color:"white"}})
+
+}
+
+function updateDashboard(){
+
+let data=filterData()
+
+updateKPI(data)
+
+salesTrend(data)
+
+bevChart(data)
+
+regional(data)
+
+models(data)
+
+worldMap(data)
 
 }
 
