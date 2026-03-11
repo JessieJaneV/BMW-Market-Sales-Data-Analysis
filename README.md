@@ -76,7 +76,7 @@ Key metrics were visualized to highlight trends and insights.
 
 BMW global sales show a steady growth trend across the analyzed period with fluctuations that reflect broader automotive market dynamics.
 
-<img src="images/Screenshot 2026-03-11 145710.jpg" width="800">
+<img src="sales_trend.jpg.jpg" width="800">
 
 ---
 
