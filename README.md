@@ -92,7 +92,7 @@ This visualization shows the evolution of BMW global sales over time, highlighti
 
 The regional analysis reveals how different geographic markets contribute to BMW's global performance.
 
-## Regional Sales Distribution
+
 
 <img src="regional_sales.jpg" width="800">
 
@@ -102,7 +102,7 @@ The regional analysis reveals how different geographic markets contribute to BMW
 
 This chart highlights the BMW models that generate the largest share of total vehicle sales.
 
-## Top Selling Models
+
 
 <img src="top_models.jpg" width="800">
 
@@ -122,7 +122,7 @@ The share of battery electric vehicles (BEV) has increased significantly over ti
 
 The correlation matrix helps identify relationships between key variables such as sales, revenue, fuel prices, and macroeconomic indicators.
 
-## Correlation Matrix
+
 
 <img src="correlation_matrix.jpg" width="800">
 ---
