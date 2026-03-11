@@ -319,27 +319,60 @@ bevGrowth.style.color=growthColor(g4.value)
 
 function salesTrend(data){
 
-let map={}
+let yearly={}
 
 data.forEach(d=>{
-
-map[d.Year]=(map[d.Year]||0)+(+d.Units_Sold)
-
+yearly[d.Year]=(yearly[d.Year]||0)+(+d.Units_Sold)
 })
+
+let years=Object.keys(yearly).sort()
+
+let values=years.map(y=>yearly[y])
 
 Plotly.newPlot("salesTrend",[{
 
-x:Object.keys(map),
-y:Object.values(map),
+x:years,
+y:values,
+
 mode:"lines+markers",
-line:{width:4,color:"#38bdf8"}
 
-}],
+line:{
+width:4,
+color:"#38bdf8"
+},
 
-{title:"Sales Trend",paper_bgcolor:"#1e293b",plot_bgcolor:"#1e293b",font:{color:"white"}})
+marker:{
+size:8
+},
 
+fill:"tozeroy",
+
+hovertemplate:
+"<b>Year:</b> %{x}<br>"+
+"<b>Units Sold:</b> %{y:,}"
+
+}],{
+
+title:"BMW Global Sales Trend",
+
+paper_bgcolor:"#1e293b",
+plot_bgcolor:"#1e293b",
+
+font:{color:"white"},
+
+xaxis:{
+title:"Year",
+gridcolor:"#334155"
+},
+
+yaxis:{
+title:"Units Sold",
+gridcolor:"#334155"
 }
 
+})
+
+}
 function bevChart(data){
 
 let yearly = {}
