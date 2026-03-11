@@ -466,13 +466,11 @@ marker:{color:"#6366f1"}
 
 function worldMap(data){
 
-let countrySales={}
+let map={}
 
 data.forEach(d=>{
 
-let c=d.Country
-
-countrySales[c]=(countrySales[c]||0)+(+d.Units_Sold)
+map[d.Region]=(map[d.Region]||0)+(+d.Units_Sold)
 
 })
 
@@ -480,26 +478,20 @@ Plotly.newPlot("map",[{
 
 type:"choropleth",
 
-locations:Object.keys(countrySales),
+locations:Object.keys(map),
 
-locationmode:"country names",
+locationmode:"continent names",
 
-z:Object.values(countrySales),
+z:Object.values(map),
 
-colorscale:"Viridis",
+colorscale:"Blues",
 
-colorbar:{
-title:"Units Sold"
-}
+colorbar:{title:"Units Sold"}
 
 }],
 
 {
-title:"BMW Global Sales by Country",
-geo:{
-projection:{type:"natural earth"}
-},
-
+title:"BMW Global Sales by Region",
 paper_bgcolor:"#1e293b",
 font:{color:"white"}
 })
