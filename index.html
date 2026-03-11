@@ -164,6 +164,12 @@ BEV Share
 <div id="models"></div>
 </div>
 
+<div class="card full">
+
+<h3>Key Insights</h3>
+
+<ul id="insights"></ul>
+
 </div>
 
 <script>
@@ -336,35 +342,75 @@ line:{width:4,color:"#38bdf8"}
 
 function bevChart(data){
 
-let map={}
+let years=[...new Set(data.map(d=>d.Year))]
 
-data.forEach(d=>{
+let bevPerYear=years.map(y=>{
 
-if(!map[d.Year]) map[d.Year]=[]
+let arr=data.filter(d=>d.Year==y)
 
-map[d.Year].push(+d.BEV_Share)
+let avg=arr.reduce((a,b)=>a+(+b.BEV_Share),0)/arr.length
 
-})
-
-let years=Object.keys(map)
-
-let values=years.map(y=>{
-
-let arr=map[y]
-return arr.reduce((a,b)=>a+b)/arr.length
+return avg
 
 })
+
+let frames=years.map((y,i)=>({
+
+name:y,
+
+data:[{
+
+x:years.slice(0,i+1),
+
+y:bevPerYear.slice(0,i+1),
+
+mode:"lines+markers"
+
+}]
+
+}))
 
 Plotly.newPlot("bevChart",[{
 
-x:years,
-y:values,
+x:[years[0]],
+
+y:[bevPerYear[0]],
+
 mode:"lines+markers",
+
 line:{width:4,color:"#22c55e"}
 
 }],
 
-{title:"BEV Adoption",paper_bgcolor:"#1e293b",plot_bgcolor:"#1e293b",font:{color:"white"}})
+{
+
+title:"EV Adoption Growth",
+
+paper_bgcolor:"#1e293b",
+plot_bgcolor:"#1e293b",
+font:{color:"white"},
+
+updatemenus:[{
+
+type:"buttons",
+
+buttons:[{
+
+label:"Play",
+
+method:"animate",
+
+args:[null]
+
+}]
+
+}]
+
+},
+
+{frames:frames}
+
+)
 
 }
 
@@ -420,38 +466,98 @@ marker:{color:"#6366f1"}
 
 function worldMap(data){
 
-let map={}
+let countrySales={}
 
 data.forEach(d=>{
 
-map[d.Region]=(map[d.Region]||0)+(+d.Units_Sold)
+let c=d.Country
+
+countrySales[c]=(countrySales[c]||0)+(+d.Units_Sold)
 
 })
 
 Plotly.newPlot("map",[{
 
 type:"choropleth",
-locations:Object.keys(map),
+
+locations:Object.keys(countrySales),
+
 locationmode:"country names",
-z:Object.values(map),
-colorscale:"Blues"
+
+z:Object.values(countrySales),
+
+colorscale:"Viridis",
+
+colorbar:{
+title:"Units Sold"
+}
 
 }],
 
-{title:"Global Sales Map",paper_bgcolor:"#1e293b",font:{color:"white"}})
+{
+title:"BMW Global Sales by Country",
+geo:{
+projection:{type:"natural earth"}
+},
+
+paper_bgcolor:"#1e293b",
+font:{color:"white"}
+})
 
 }
+function generateInsights(data){
 
+let insights=[]
+
+let total=data.reduce((a,b)=>a+(+b.Units_Sold),0)
+
+let topRegion={}
+
+data.forEach(d=>{
+topRegion[d.Region]=(topRegion[d.Region]||0)+(+d.Units_Sold)
+})
+
+let bestRegion=Object.entries(topRegion)
+.sort((a,b)=>b[1]-a[1])[0][0]
+
+insights.push(
+"Top market: "+bestRegion
+)
+
+let bevAvg=data.reduce((a,b)=>a+(+b.BEV_Share),0)/data.length
+
+if(bevAvg>20)
+insights.push("EV adoption accelerating across BMW markets")
+
+if(total>2000000)
+insights.push("Global demand remains strong")
+
+let list=document.getElementById("insights")
+
+list.innerHTML=""
+
+insights.forEach(i=>{
+
+let li=document.createElement("li")
+li.innerText=i
+
+list.appendChild(li)
+
+})
+
+}
 function updateDashboard(){
 
-let data=filterData()
+   let data = filterData()
 
-updateKPI(data)
-salesTrend(data)
-bevChart(data)
-regional(data)
-models(data)
-worldMap(data)
+   updateKPI(data)
+   salesTrend(data)
+   bevChart(data)
+   regional(data)
+   models(data)
+   worldMap(data)
+
+   generateInsights(data)
 
 }
 
