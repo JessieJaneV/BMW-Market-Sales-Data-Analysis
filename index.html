@@ -4,7 +4,6 @@
 <head>
 
 <meta charset="UTF-8">
-
 <title>BMW Global Sales Dashboard</title>
 
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
@@ -21,7 +20,7 @@ color:white;
 
 .header{
 text-align:center;
-font-size:28px;
+font-size:30px;
 padding:25px;
 font-weight:600;
 }
@@ -29,8 +28,8 @@ font-weight:600;
 .controls{
 display:flex;
 justify-content:center;
-gap:25px;
-padding:15px;
+gap:20px;
+padding:10px;
 }
 
 select{
@@ -52,22 +51,21 @@ padding:20px;
 }
 
 .kpi{
-background:linear-gradient(145deg,#1e293b,#0f172a);
-border-radius:12px;
+background:linear-gradient(145deg,#1e293b,#020617);
+border-radius:14px;
 padding:20px;
 text-align:center;
-box-shadow:0 10px 30px rgba(0,0,0,0.6);
+box-shadow:0 15px 40px rgba(0,0,0,0.7);
 }
 
 .kpi-value{
-font-size:28px;
-margin-top:10px;
+font-size:30px;
 font-weight:700;
 }
 
 .kpi-growth{
-font-size:14px;
-margin-top:5px;
+font-size:15px;
+margin-top:6px;
 }
 
 .container{
@@ -79,7 +77,7 @@ padding:20px;
 
 .card{
 background:#1e293b;
-border-radius:10px;
+border-radius:12px;
 padding:15px;
 }
 
@@ -110,7 +108,6 @@ Year
 id="yearSlider"
 min="2018"
 max="2025"
-step="1"
 value="2025">
 
 <span id="yearLabel">2025</span>
@@ -183,7 +180,6 @@ complete:function(res){
 dataset=res.data.filter(d=>d.Year)
 
 initFilters()
-
 updateDashboard()
 
 }
@@ -204,7 +200,6 @@ document.querySelectorAll("select")
 yearSlider.oninput=function(){
 
 yearLabel.innerText=this.value
-
 updateDashboard()
 
 }
@@ -220,9 +215,7 @@ el.innerHTML="<option value='all'>All</option>"
 values.forEach(v=>{
 
 let opt=document.createElement("option")
-
 opt.value=v
-
 opt.text=v
 
 el.appendChild(opt)
@@ -233,11 +226,9 @@ el.appendChild(opt)
 
 function filterData(){
 
-let year=document.getElementById("yearSlider").value
-
-let region=document.getElementById("regionFilter").value
-
-let model=document.getElementById("modelFilter").value
+let year=yearSlider.value
+let region=regionFilter.value
+let model=modelFilter.value
 
 return dataset.filter(d=>
 
@@ -249,57 +240,77 @@ d.Year<=year &&
 
 }
 
+function growthColor(v){
+
+return v>=0 ? "#22c55e" : "#ef4444"
+
+}
+
 function computeGrowth(current,previous){
 
-if(previous===0) return ""
+if(previous===0) return {text:"",value:0}
 
 let g=((current-previous)/previous)*100
 
 let arrow=g>=0?"▲":"▼"
 
-return arrow+" "+g.toFixed(1)+"%"
+return {text:arrow+" "+g.toFixed(1)+"%",value:g}
 
 }
 
 function updateKPI(data){
 
-let unitsEl = document.getElementById("units")
-let revenueEl = document.getElementById("revenue")
-let priceEl = document.getElementById("price")
-let bevEl = document.getElementById("bev")
+let unitsEl=document.getElementById("units")
+let revenueEl=document.getElementById("revenue")
+let priceEl=document.getElementById("price")
+let bevEl=document.getElementById("bev")
 
-let year = yearSlider.value
+let year=yearSlider.value
 
-let current = data.filter(d => d.Year == year)
-let prev = data.filter(d => d.Year == year - 1)
+let current=data.filter(d=>d.Year==year)
+let prev=data.filter(d=>d.Year==year-1)
 
 function sum(arr,col){
+
 return arr.reduce((a,b)=>a+(+b[col]||0),0)
-}
-
-let units = sum(current,"Units_Sold")
-let unitsPrev = sum(prev,"Units_Sold")
-
-let revenue = sum(current,"Revenue_EUR")
-let revenuePrev = sum(prev,"Revenue_EUR")
-
-let price = sum(current,"Avg_Price_EUR")/current.length
-let pricePrev = sum(prev,"Avg_Price_EUR")/prev.length
-
-let bev = sum(current,"BEV_Share")/current.length
-let bevPrev = sum(prev,"BEV_Share")/prev.length
-
-unitsEl.innerText = units.toLocaleString()
-revenueEl.innerText = Math.round(revenue/1e9)+"B"
-priceEl.innerText = Math.round(price)
-bevEl.innerText = bev.toFixed(1)+"%"
-
-unitsGrowth.innerText = computeGrowth(units,unitsPrev)
-revenueGrowth.innerText = computeGrowth(revenue,revenuePrev)
-priceGrowth.innerText = computeGrowth(price,pricePrev)
-bevGrowth.innerText = computeGrowth(bev,bevPrev)
 
 }
+
+let units=sum(current,"Units_Sold")
+let unitsPrev=sum(prev,"Units_Sold")
+
+let revenue=sum(current,"Revenue_EUR")
+let revenuePrev=sum(prev,"Revenue_EUR")
+
+let price=sum(current,"Avg_Price_EUR")/current.length
+let pricePrev=sum(prev,"Avg_Price_EUR")/prev.length
+
+let bev=sum(current,"BEV_Share")/current.length
+let bevPrev=sum(prev,"BEV_Share")/prev.length
+
+unitsEl.innerText=units.toLocaleString()
+revenueEl.innerText=Math.round(revenue/1e9)+"B"
+priceEl.innerText=Math.round(price)
+bevEl.innerText=bev.toFixed(1)+"%"
+
+let g1=computeGrowth(units,unitsPrev)
+unitsGrowth.innerText=g1.text
+unitsGrowth.style.color=growthColor(g1.value)
+
+let g2=computeGrowth(revenue,revenuePrev)
+revenueGrowth.innerText=g2.text
+revenueGrowth.style.color=growthColor(g2.value)
+
+let g3=computeGrowth(price,pricePrev)
+priceGrowth.innerText=g3.text
+priceGrowth.style.color=growthColor(g3.value)
+
+let g4=computeGrowth(bev,bevPrev)
+bevGrowth.innerText=g4.text
+bevGrowth.style.color=growthColor(g4.value)
+
+}
+
 function salesTrend(data){
 
 let map={}
@@ -313,12 +324,9 @@ map[d.Year]=(map[d.Year]||0)+(+d.Units_Sold)
 Plotly.newPlot("salesTrend",[{
 
 x:Object.keys(map),
-
 y:Object.values(map),
-
 mode:"lines+markers",
-
-line:{width:4}
+line:{width:4,color:"#38bdf8"}
 
 }],
 
@@ -343,7 +351,6 @@ let years=Object.keys(map)
 let values=years.map(y=>{
 
 let arr=map[y]
-
 return arr.reduce((a,b)=>a+b)/arr.length
 
 })
@@ -351,12 +358,9 @@ return arr.reduce((a,b)=>a+b)/arr.length
 Plotly.newPlot("bevChart",[{
 
 x:years,
-
 y:values,
-
 mode:"lines+markers",
-
-line:{width:4}
+line:{width:4,color:"#22c55e"}
 
 }],
 
@@ -377,10 +381,9 @@ map[d.Region]=(map[d.Region]||0)+(+d.Units_Sold)
 Plotly.newPlot("regional",[{
 
 x:Object.keys(map),
-
 y:Object.values(map),
-
-type:"bar"
+type:"bar",
+marker:{color:"#f59e0b"}
 
 }],
 
@@ -399,18 +402,15 @@ map[d.Model]=(map[d.Model]||0)+(+d.Units_Sold)
 })
 
 let sorted=Object.entries(map)
-
 .sort((a,b)=>b[1]-a[1])
-
 .slice(0,10)
 
 Plotly.newPlot("models",[{
 
 x:sorted.map(d=>d[0]),
-
 y:sorted.map(d=>d[1]),
-
-type:"bar"
+type:"bar",
+marker:{color:"#6366f1"}
 
 }],
 
@@ -431,13 +431,9 @@ map[d.Region]=(map[d.Region]||0)+(+d.Units_Sold)
 Plotly.newPlot("map",[{
 
 type:"choropleth",
-
 locations:Object.keys(map),
-
 locationmode:"country names",
-
 z:Object.values(map),
-
 colorscale:"Blues"
 
 }],
@@ -451,15 +447,10 @@ function updateDashboard(){
 let data=filterData()
 
 updateKPI(data)
-
 salesTrend(data)
-
 bevChart(data)
-
 regional(data)
-
 models(data)
-
 worldMap(data)
 
 }
